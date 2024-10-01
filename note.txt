@@ -1,3 +1,12 @@
 The process object is the global object in node js that provides information about the current Node.js process, as well as  way to interact with the process. There is many properties, method and event in process object.
 The process.exit() method in node js used to exit the node js process. It is the way to terminate the process programmaticaaly either normally or with an error.
 It is used to terminate the node js process which can be useful in certain situations, such as when an error occurs and you want to exit the process immediately. it allows to return an exit code, which can be used to indicae the status of the process. For example you can return an exist code of 0 to indicate success or a non-zero value to indicate an error.
+
+JSON Web Token (JWT) is a compact, URL-safe means of representing claims to be transferred between two parties. The token is digitally signed and contains a payload that can be verified and trusted.
+
+Why use JSON Web Token (JWT) in our project?
+
+Here are some reasons why we might use JWT in our project:
+
+Authentication and Authorization: JWT can be used to authenticate and authorize users. When a user logs in, we can generate a JWT token that contains their user ID and other relevant information. This token can then be sent with each subsequent request to verify the user's identity and permissions.
+Stateless Authentication: JWT is stateless, meaning that the server does not need to store any information about the user's session. This makes it easier to scale our application and reduces the risk of session fixation attacks.
