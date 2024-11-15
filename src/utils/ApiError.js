@@ -22,5 +22,5 @@ class ApiError extends Error {
 }
 
 export {ApiError}
-const api = new ApiError()
-console.log(api);
+//const api = new ApiError()
+
