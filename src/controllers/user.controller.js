@@ -42,15 +42,17 @@ const registerUser = asyncHandler(async (req, res) => {
   //return res
 
   const { fullname, email, username, password } = req.body;
+  console.log({fullname, email,username,password});
+  
 
-  if (
-    [fullname, email, username, password].some((field) => field.trim() === "")
-  ) {
-    //The some() method is an iterative method, which means it calls a provided callbackFn function once for each element in an array, until the callbackFn returns a truthy value. If such an element is found, some() immediately returns true and stops iterating through the array. Otherwise, if callbackFn returns a falsy value for all elements, some() returns false.
-    //some method return true or false value if this method itertate until the value got true any of the condition and immediately stops the iteration and return a true value
+  // if (
+  //   [fullname, email, username, password].some((field) => field?.trim() === "")
+  // ) {
+  //   //The some() method is an iterative method, which means it calls a provided callbackFn function once for each element in an array, until the callbackFn returns a truthy value. If such an element is found, some() immediately returns true and stops iterating through the array. Otherwise, if callbackFn returns a falsy value for all elements, some() returns false.
+  //   //some method return true or false value if this method itertate until the value got true any of the condition and immediately stops the iteration and return a true value
 
-    throw new ApiError(400, "All fields are required");
-  }
+  //   throw new ApiError(400, "All fields are required");
+  // }
 
   const existedUser = await User.findOne({
     //mongoose method
@@ -63,7 +65,16 @@ const registerUser = asyncHandler(async (req, res) => {
 
   //multer helps us to access files in req parameter in callback just like express gives body access in req paramater
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  console.log('avatarLocalPath: ', avatarLocalPath);
+  
+  //const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let coverImageLocalPath;
+  if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+      coverImageLocalPath = req.files?.coverImage[0]?.path
+  }
+
+  console.log('COVERIMAGEFILEPATH:', coverImageLocalPath);
+  
 
   if (!avatarLocalPath) {
     //checking avatar is upload or not
@@ -72,6 +83,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const avatar = await uploadOnCloudinary(avatarLocalPath); //we set await because it might take some time to upload a file in the cloudinary
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  console.log('coverImage:' , coverImage);
+  
 
   if (!avatar) {
     return new ApiError(400, "Avatar is requird field");

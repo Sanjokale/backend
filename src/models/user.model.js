@@ -1,7 +1,6 @@
 import mongoose, { Schema } from "mongoose";
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
-
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
   {
@@ -52,13 +51,14 @@ const userSchema = new Schema(
   }
 );
 
-userSchema.pre("save", async function (next) {  //here we use normal function instead of arrow function because of arrow function doesnot hold the current context in "this" keyword.
-    if(!this.isModified("password")) return next()
-    this.password = await bcrypt.hash(this.password, 10)
-    next();
-})
+userSchema.pre("save", async function (next) {
+  //here we use normal function instead of arrow function because of arrow function doesnot hold the current context in "this" keyword.
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
 
-console.log('userschema',userSchema.methods);
+console.log("userschema", userSchema.methods);
 //in mongoose we can inject the custom methods to it just like that middleware
 // The userSchema in your Mongoose setup plays a crucial role in defining instance methods, such as isPasswordCorrect.
 // Instance Method Creation
@@ -69,45 +69,40 @@ console.log('userschema',userSchema.methods);
 
 // You can add instance methods directly to the schema using userSchema.methods. This allows you to define functions that can be called on individual user instances.
 userSchema.methods.isPasswordCorrect = async function (password) {
-    return await bcrypt.compare(password, this.password);
-    //In the context of instance methods, this refers to the specific instance of the user document. This is crucial because it allows the method to access instance-specific properties, such as this.password, which contains the hashed password for that particular user.
-    //this method returns a true or false based on the comparision
-}
+  return await bcrypt.compare(password, this.password);
+  //In the context of instance methods, this refers to the specific instance of the user document. This is crucial because it allows the method to access instance-specific properties, such as this.password, which contains the hashed password for that particular user.
+  //this method returns a true or false based on the comparision
+};
 
 userSchema.methods.generateAccessToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-            email: this.email,
-            username: this.username,
-            fullname: this.fullname
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
-        }
-    )
-}
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      username: this.username,
+      fullname: this.fullname,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
+};
 
 userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-            
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
-        }
-    )
-}
-
-
-
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    }
+  );
+};
 
 export const User = mongoose.model("User", userSchema);
-console.log('User', User);
-
+console.log("User", User);
 
 //console.log(User.fullname);
 
