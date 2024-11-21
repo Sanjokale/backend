@@ -204,7 +204,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User logged Out Successfully"));
 });
 
-const refreshAccessToken = asyncHandler(async () => {
+const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken; //here we say incoming refresh token because we have also refresh token in database.
 
@@ -253,4 +253,22 @@ const refreshAccessToken = asyncHandler(async () => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user?.id);
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Invalid old Password");
+  }
+
+  user.password = newPassword;  //
+  await user.save({ validateBeforeSave: false }); //here validateBeforeSave false is use to only validate the password field in the user model. it skips the other fields in the user model to validate
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "password change successfully"));
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword };
