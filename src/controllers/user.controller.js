@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -42,17 +43,16 @@ const registerUser = asyncHandler(async (req, res) => {
   //return res
 
   const { fullname, email, username, password } = req.body;
-  console.log({fullname, email,username,password});
-  
+  console.log({ fullname, email, username, password });
 
-  // if (
-  //   [fullname, email, username, password].some((field) => field?.trim() === "")
-  // ) {
-  //   //The some() method is an iterative method, which means it calls a provided callbackFn function once for each element in an array, until the callbackFn returns a truthy value. If such an element is found, some() immediately returns true and stops iterating through the array. Otherwise, if callbackFn returns a falsy value for all elements, some() returns false.
-  //   //some method return true or false value if this method itertate until the value got true any of the condition and immediately stops the iteration and return a true value
+  if (
+    [fullname, email, username, password].some((field) => field?.trim() === "")
+  ) {
+    //The some() method is an iterative method, which means it calls a provided callbackFn function once for each element in an array, until the callbackFn returns a truthy value. If such an element is found, some() immediately returns true and stops iterating through the array. Otherwise, if callbackFn returns a falsy value for all elements, some() returns false.
+    //some method return true or false value if this method itertate until the value got true any of the condition and immediately stops the iteration and return a true value
 
-  //   throw new ApiError(400, "All fields are required");
-  // }
+    throw new ApiError(400, "All fields are required");
+  }
 
   const existedUser = await User.findOne({
     //mongoose method
@@ -65,16 +65,19 @@ const registerUser = asyncHandler(async (req, res) => {
 
   //multer helps us to access files in req parameter in callback just like express gives body access in req paramater
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  console.log('avatarLocalPath: ', avatarLocalPath);
-  
+  console.log("avatarLocalPath: ", avatarLocalPath);
+
   //const coverImageLocalPath = req.files?.coverImage[0]?.path;
   let coverImageLocalPath;
-  if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-      coverImageLocalPath = req.files?.coverImage[0]?.path
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files?.coverImage[0]?.path;
   }
 
-  console.log('COVERIMAGEFILEPATH:', coverImageLocalPath);
-  
+  console.log("COVERIMAGEFILEPATH:", coverImageLocalPath);
 
   if (!avatarLocalPath) {
     //checking avatar is upload or not
@@ -83,8 +86,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const avatar = await uploadOnCloudinary(avatarLocalPath); //we set await because it might take some time to upload a file in the cloudinary
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-  console.log('coverImage:' , coverImage);
-  
+  console.log("coverImage:", coverImage);
 
   if (!avatar) {
     return new ApiError(400, "Avatar is requird field");
@@ -122,8 +124,9 @@ const loginUser = asyncHandler(async (req, res) => {
   //send token via cookies
 
   const { email, username, password } = req.body;
+  // console.log(email);
 
-  if (!(username || email)) {
+  if (!email && !username) {
     throw new ApiError(400, "username or password is required");
   }
 
@@ -181,8 +184,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
       },
     },
     {
@@ -197,8 +200,57 @@ const logoutUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", option)
+    .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged Out Successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async () => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken; //here we say incoming refresh token because we have also refresh token in database.
+
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "unauthorized request");
+  }
+
+  //verify refreshtoken
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    ); //we need decoded token because in the database the refresh token is saved as the decoded version
+
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, "invalid refresh token");
+    }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(401, "refresh token is used or expired");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid refresh token");
+  }
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
