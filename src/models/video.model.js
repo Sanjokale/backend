@@ -12,27 +12,27 @@ const videoSchema = new Schema(
       required: true,
     },
     title: {
-      type: String, // cloudanary url
+      type: String, 
       required: true,
     },
     description: {
-      type: String, // cloudanary url
+      type: String, 
       required: true,
     },
     duration: {
-      type: Number, // cloudanary url
+      type: Number, 
       required: true,
     },
     views: {
-      type: Number, // cloudanary url
+      type: Number, 
       default: 0,
     },
     isPublished: {
-      type: Boolean, // cloudanary url
+      type: Boolean, 
       default: true,
     },
     owner: {
-      type: Schema.Types.ObjectId, // cloudanary url
+      type: Schema.Types.ObjectId, 
       ref: "User",
     },
   },
