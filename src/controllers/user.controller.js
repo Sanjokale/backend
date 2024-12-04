@@ -302,66 +302,129 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 //as possible as try to make file changes api different endpoint
 const updateUserAvatar = asyncHandler(async (req, res) => {
-  const avatarLocalPath = req.file?.path
+  const avatarLocalPath = req.file?.path;
 
-  if(!avatarLocalPath) {
-    throw new ApiError(200, "Avatar file is missing")
+  if (!avatarLocalPath) {
+    throw new ApiError(200, "Avatar file is missing");
   }
-
-  const avatar = await uploadOnCloudinary(avatarLocalPath)
-  if(!avatar.url) {
-    throw new apiError (400, "Error while uploading on avatar")
+  //delete old image
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  if (!avatar.url) {
+    throw new ApiError(400, "Error while uploading on avatar");
   }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
-      $set:{
-        avatar: avatar.url
-      }
+      $set: {
+        avatar: avatar.url,
+      },
     },
     {
-      new: true
+      new: true,
     }
-  )
+  );
 
-  retrun res.status(200).json(
-    new ApiResponse(200, user, "Avatar upload successfully")
-  )
-
-
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Avatar upload successfully"));
+});
 const updateUserCoverImage = asyncHandler(async (req, res) => {
-  const coverImageLocalPath = req.file?.path
+  const coverImageLocalPath = req.file?.path;
 
-  if(!coverImageLocalPath) {
-    throw new ApiError(200, "Avatar file is missing")
+  if (!coverImageLocalPath) {
+    throw new ApiError(200, "Avatar file is missing");
   }
 
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-  if(!coverImage.url) {
-    throw new apiError (400, "Error while uploading on avatar")
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  if (!coverImage.url) {
+    throw new ApiError(400, "Error while uploading on avatar");
   }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
-      $set:{
-        coverImage: coverImage.url
-      }
+      $set: {
+        coverImage: coverImage.url,
+      },
     },
     {
-      new: true
+      new: true,
     }
-  )
+  );
 
-  retrun res.status(200).json(
-    new ApiResponse(200, user, "Cover Image upload successfully")
-  )
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover Image upload successfully"));
+});
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
 
-})
-
+  if (!username?.trim()) {
+    throw new ApiError(400, "username is missing");
+  }
+  //const user = await User.findOne({ username })
+  //here we want to use aggrigation pipeline
+  const channel = await User.aggregate([
+    {
+      $match: {
+        username: username?.toLowerCase(),
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: { $in: [req.user._id, "$subscribers.subscriber"] },
+          then: true,
+          else: false,
+        },
+      },
+    },
+    {
+      $project: {
+        fullname: 1,
+        username: 1,
+        subscribersCount: 1,
+        channelSubscribedToCount: 1,
+        isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
+        email: 1,
+      },
+    },
+  ]);
+  if (!channel?.length) {
+    throw new ApiError(404, "channel does not exists");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "user channel fetched successfully")
+    );
+});
 
 export {
   registerUser,
@@ -372,5 +435,6 @@ export {
   getCurrentUser,
   updateAccountDetails,
   updateUserAvatar,
-  updateUserCoverImage
+  updateUserCoverImage,
+  getUserChannelProfile,
 };
