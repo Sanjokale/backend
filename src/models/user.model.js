@@ -52,7 +52,7 @@ const userSchema = new Schema(
 );
 
 userSchema.pre("save", async function (next) {
-  //here we use normal function instead of arrow function because of arrow function doesnot hold the current context in "this" keyword.
+  //here we use normal function instead of arrow function because of arrow function doesnot hold the current context in "this" keyword. here pre is the mogoose hook which is execute before the save method. this is like a middleware which is execute whenever password is changes before save in the database.
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);  //this method is execute while the password is changes before save in the database
   next();
@@ -74,7 +74,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   //this method returns a true or false based on the comparision
 };
 
-userSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = function () {  //here in the context of instance method this refers to the specific instance of the user document and we can access the instance specific properties. and here we addded the method to the userSchema so that we can access this method to the user instance.
   return jwt.sign(
     {
       _id: this._id,

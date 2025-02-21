@@ -16,7 +16,7 @@ const uploadOnCloudinary = async (localFilePath) => {
     });
     //file has beem  uploaded successfully
     //console.log('file is uploaded on cloudinary', response.url);
-    fs.unlinkSync(localFilePath);
+    fs.unlinkSync(localFilePath);  //here we use the unlinksync method, the sync means the the code is execute synchronously. here we remove the file from the local storage after the file is uploaded on the cloudinary, then we go to the next step.
     return response;
   } catch (error) {
     //fs.unlink() in Node.js, when you delete a symbolic link, you're only deleting the link itself, not the file or directory it points to. This is why fs.unlink() can be used to remove symbolic links, but not the actual files or directories they reference.

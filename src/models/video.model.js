@@ -33,7 +33,7 @@ const videoSchema = new Schema(
     },
     owner: {
       type: Schema.Types.ObjectId, 
-      ref: "User",
+      ref: "User",   //here we are refering the user model we might use aggriagation pipeline to get the user details or we can use populate method or nested populate method
     },
   },
   {
