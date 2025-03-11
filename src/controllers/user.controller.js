@@ -185,7 +185,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $unset: {
+      $unset: {  //unset is used to remove the field from the document. unset is mongoose operator method
         refreshToken: 1,
       },
     },
@@ -569,9 +569,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
 
 
-  module.exports = {
-    getUserChannelProfile,
-  };
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {

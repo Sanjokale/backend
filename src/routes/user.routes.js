@@ -14,6 +14,8 @@ import {
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { Subscription } from "../models/subscription.model.js";
+
 
 const router = Router();
 
@@ -51,7 +53,7 @@ router.route("/c/history").get(verifyJWT, getWatchHistory);
 
 
 
-// Subscribe to a channel
+// Subscribe to a channel subscription routes
 router.post('/subscribe', async (req, res) => {
   const { subscriberId, subscribedChannelId } = req.body;
 
@@ -166,7 +168,7 @@ router.get('/subscriptions/:userId', async (req, res) => {
 //   );
 // }));
 
-module.exports = router;
+//module.exports = router;
 
 
 

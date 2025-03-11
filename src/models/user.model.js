@@ -27,7 +27,7 @@ const userSchema = new Schema(
     },
     avatar: {
       type: String, //cloudanary url
-      required: true,
+     // required: true,
     },
     coverImage: {
       type: String,
@@ -77,7 +77,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 userSchema.methods.generateAccessToken = function () {  //here in the context of instance method this refers to the specific instance of the user document and we can access the instance specific properties. and here we addded the method to the userSchema so that we can access this method to the user instance.
   return jwt.sign(
     {
-      _id: this._id,
+      //these details are stored in the token if we decode the token we can get these details.
+      _id: this._id,   
       email: this.email,
       username: this.username,
       fullname: this.fullname,
